@@ -1,0 +1,147 @@
+---
+title: "Lab 04 - La Quinta is Spanish for next to Denny's, Pt. 1"
+author: "Rosalina Delwiche"
+date: "October 17, 2022"
+output: html_document
+---
+
+### Load packages and data
+
+```{r load-packages, message=FALSE, include=FALSE}
+library(tidyverse) 
+library(dsbox) 
+```
+
+```{r load-data, message=FALSE, include=FALSE}
+states <- read_csv("data/states.csv")
+d <- dennys
+l <- laquinta
+
+```
+
+### Exercise 1
+Dimension is listed below. Each row represents a location and the variables are: address, city, state, zip, longtude, and latitude.
+
+```{r}
+number_of_rows_dennys <- nrow(dennys)
+number_of_columns_dennys <- ncol(dennys)
+paste(number_of_rows_dennys ,number_of_columns_dennys ,sep="x")
+```
+
+
+
+### Exercise 2
+Dimension is listed below. Each row represents a location and the variables are: address, city, state, zip, longtude, and latitude.
+
+```{r}
+number_of_rows_lq <- nrow(laquinta)
+number_of_columns_lq<- ncol(laquinta)
+paste(number_of_rows_lq,number_of_columns_lq,sep="x")
+```
+
+
+### Exercise 3
+
+There are La Quinta's outside of the US in Canada and Mexico, but there are no Denny's outside of the US. 
+
+### Exercise 4
+
+One way to determine whether or not the location is outside of the US is to filter by state. In this you would do something like state %in% c('MD','NY'...) where that list contains all 50 states plus D.C, then wrap that in a not opertor. Or similarly, we could use the dataset with all the states instead of writing out the list by hand. Exercise 5 shows the simpler way to do this.
+
+### Exercise 5
+
+```{r}
+d %>% filter(!(state %in% states$abbreviation))
+```
+
+As demonstrated, there are no Denny's locations outside of the US. 
+
+### Exercise 6
+
+```{r}
+d <- d %>%
+  mutate(country = "United States")
+```
+
+### Exercise 7
+There are 14 locations for LaQuintas outside of the US and these are in Mexico, Columbia, Honduras, and Canada.
+```{r}
+x <- l %>% filter(!(state %in% states$abbreviation))
+```
+### Exercise 8
+
+```{r}
+l <- l %>%
+  mutate(country = case_when(
+    state %in% state.abb     ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT"           ~ "Colombia",
+    state %in% c("AG","QR","CH","NL","VE", "PU", "SL") ~ "Mexico",
+    state == "FM" ~ "Honduras"
+  ))
+
+```
+
+```{r}
+l <- l %>%
+  filter(country == "United States")
+```
+
+### Exercise 9
+```{r}
+d2 <- d %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+
+l2 <-l %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+
+
+```
+
+Delaware has the fewest Denny's and California has the most. 
+Maine has the fewest LaQuinta and Texas has the most. 
+
+Although there is a vast difference in where the locations are concentrated, this is not surprising. Texas and California are some of the biggest states, meaning more places to put locations. Delaware and Maine are smaller than both those states, so they should have less. 
+
+
+### Exercise 10 
+```{r}
+d3 <- d %>%
+  mutate(establishment = "Denny's")
+l3 <- l %>%
+  mutate(establishment = "La Quinta")
+
+dn_lq <- bind_rows(d3, l3)
+
+#finding the state with the most locations per thousand square miles
+d4 <- d2  %>% mutate(density = n/(area/1000))
+l4 <- l2  %>% mutate(density = n/(area/1000))
+
+
+ggplot(dn_lq, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point() + ggtitle("Denny's and La Quinta Locations")
+
+```
+
+Rhode Island has the most La Quinta per square mile and DC has the most Denny's per square mile.
+
+
+### Exercise 11  
+```{r}
+dn_lq_nc <- dn_lq %>% filter(state == "NC")
+
+ggplot(dn_lq_nc, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point(alpha = 4/10)+ ggtitle("Denny's and La Quinta Locations in North Carolina")
+```
+Visually, the joke does not hold entirely true here. For example, the La Quintas at longitue -81,5, latitude 36.25  has no Denny's in close proximity. However, the other La Quinta locations are closer to a Denny's. 
+
+###Exercise 12
+```{r}
+dn_lq_tx <- dn_lq %>% filter(state == "TX")
+
+ggplot(dn_lq_tx, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point(alpha = 3/10) + ggtitle("Denny's and La Quinta Locations in Texas")
+```
+Visually, the joke does not hold true. There are locations in Texas that are not even in close proximity to a Denny's. Further, the La Quintas seem to be more spread out then the Denny's.
